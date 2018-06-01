@@ -109,21 +109,19 @@ export default class App extends Component {
     return (
       <View style={styles.container} {...this._panResponder.panHandlers}>
         <StatusBar hidden />
-        <View style={(styles.center, styles.skyblue)}>
-          <TouchableOpacity onPress={this.onPress}>
-            <Text>{this.state.zone}</Text>
-          </TouchableOpacity>
+        <View style={(styles.statBar, styles.skyblue)}>
+          <Text style={styles.statBar}>{this.state.zone}</Text>
         </View>
-        <View style={[styles.zone, styles.magenta]} />
-        <View style={[styles.zone, styles.orange]} />
-        <View style={[styles.zone, styles.blue]} />
-        <View style={[styles.zone, styles.green]} />
-        <View style={[styles.zone, styles.red]} />
-        <View style={[styles.zone, styles.yellow]} />
-        <View style={[styles.zone, styles.teal]} />
-        <View style={[styles.zone, styles.purple]} />
-        <View style={[styles.zone, styles.pink]} />
-        <View style={[styles.zone, styles.plum]} />
+        <View style={[styles.regElem, styles.magenta]} />
+        <View style={[styles.regElem, styles.orange]} />
+        <View style={[styles.regElem, styles.blue]} />
+        <View style={[styles.regElem, styles.green]} />
+        <View style={[styles.regElem, styles.red]} />
+        <View style={[styles.regElem, styles.yellow]} />
+        <View style={[styles.regElem, styles.teal]} />
+        <View style={[styles.regElem, styles.purple]} />
+        <View style={[styles.regElem, styles.pink]} />
+        <View style={[styles.regElem, styles.plum]} />
       </View>
     );
   }
@@ -131,13 +129,12 @@ export default class App extends Component {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1
+    height: height
   },
-  center: {
-    height: statBarHeight,
-    alignItems: 'center'
+  statBar: {
+    height: statBarHeight
   },
-  zone: {
+  regElem: {
     width: registryElemWidth,
     height: registryElemHeight
   },

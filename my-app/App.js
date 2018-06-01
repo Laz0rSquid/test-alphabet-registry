@@ -14,9 +14,9 @@ import {
 const { width, height } = Dimensions.get('window');
 const statBarHeight = 50;
 const registryElemWidth = 30;
-const registryElemHeight = (height - statBarHeight) / 27;
+const registryElemHeight = (height - statBarHeight) / 30;
 
-const getDirectionAndColor = ({ moveX, moveY, dx, dy }) => {
+const getColor = ({ moveX, moveY, dx, dy }) => {
   const isA =
     moveY > statBarHeight &&
     moveY <= statBarHeight + registryElemHeight &&
@@ -88,11 +88,11 @@ export default class App extends Component {
 
   componentWillMount() {
     this._panResponder = PanResponder.create({
-      onMoveShouldSetPanResponder: (evt, gestureState) => !!getDirectionAndColor(gestureState),
+      onMoveShouldSetPanResponder: (evt, gestureState) => !!getColor(gestureState),
       onPanResponderMove: (evt, gestureState) => {
-        const drag = getDirectionAndColor(gestureState);
+        const color = getColor(gestureState);
         this.setState({
-          zone: drag
+          zone: color
         });
       },
       onPanResponderTerminationRequest: (evt, gestureState) => true
@@ -129,7 +129,8 @@ export default class App extends Component {
 
 const styles = StyleSheet.create({
   container: {
-    height: height
+    height: height,
+    backgroundColor: '#000'
   },
   statBar: {
     height: statBarHeight

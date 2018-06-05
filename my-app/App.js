@@ -9,6 +9,7 @@ import {
   TouchableWithoutFeedback,
   View
 } from 'react-native';
+import AtoZList from 'react-native-atoz-list';
 
 const { height, width } = Dimensions.get('window');
 
@@ -40,14 +41,20 @@ const letters = [
   'Y',
   'Z'
 ];
-const sections = letters.map((title) => {
-  const data = new Array(26).fill('item');
 
-  return {
-    title,
-    data
-  };
-});
+const sections = {};
+for (let letter of letters) {
+  sections[letter] = new Array(26).fill('item');
+}
+
+// const sections = letters.map((title) => {
+//   const data = new Array(26).fill('item');
+
+//   return {
+//     title,
+//     data
+//   };
+// });
 
 const statBarHeight = 0; // TODO: dynamcially from app
 const registryElemWidth = 20;
@@ -121,12 +128,31 @@ export default class App extends Component {
     });
   };
 
+  _renderHeader(data) {
+    return (
+      <View style={{ justifyContent: 'center', backgroundColor: '#eee', paddingLeft: 10 }}>
+        <Text>{data.sectionId}</Text>
+      </View>
+    );
+  }
+
+  _renderCell(data) {
+    return (
+      <View style={styles.cell}>
+        <View />
+        <Text style={styles.name}>
+          {data}
+        </Text>
+      </View>
+    );
+  }
+
   render() {
     return (
       <View style={styles.container}>
         <StatusBar hidden />
         <View style={styles.listContainer}>
-          <SectionList
+          {/* <SectionList
             initialNumToRender={700}
             ref={(ref) => (this.sectionListRef = ref)}
             renderItem={({ item }) => <Text>{item}</Text>}
@@ -136,8 +162,8 @@ export default class App extends Component {
             sections={sections}
             keyExtractor={(item, index) => item + index}
             // getItemLayout={this._getItemLayout}
-          />
-          <View {...this._panResponder.panHandlers}>
+          /> */}
+          {/* <View {...this._panResponder.panHandlers}>
             {sections.map((section, index) => (
               <TouchableWithoutFeedback
                 key={`${index}${section.title}`}
@@ -149,8 +175,15 @@ export default class App extends Component {
                 </View>
               </TouchableWithoutFeedback>
             ))}
-          </View>
+          </View> */}
         </View>
+        <AtoZList
+          sectionHeaderHeight={20}
+          cellHeight={95}
+          data={sections}
+          renderCell={this._renderCell}
+          renderSection={this._renderHeader}
+        />
       </View>
     );
   }
@@ -168,5 +201,16 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     flexDirection: 'row'
+  },
+  name: {
+    fontSize: 15
+  },
+  cell: {
+    height: 95,
+    borderBottomColor: '#ccc',
+    borderBottomWidth: 1,
+    backgroundColor: '#fff',
+    flexDirection: 'row',
+    alignItems: 'center'
   }
 });

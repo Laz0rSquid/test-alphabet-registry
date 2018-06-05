@@ -5502,6 +5502,10 @@ react-is@^16.3.1, react-is@^16.4.0:
   version "16.4.0"
   resolved "https://registry.yarnpkg.com/react-is/-/react-is-16.4.0.tgz#cc9fdc855ac34d2e7d9d2eb7059bbc240d35ffcf"
 
+react-native-atoz-list@^1.0.3:
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/react-native-atoz-list/-/react-native-atoz-list-1.0.3.tgz#2230bc5611330b9baa71b0da8db1b70a255f1408"
+
 react-native-branch@2.0.0-beta.3:
   version "2.0.0-beta.3"
   resolved "https://registry.yarnpkg.com/react-native-branch/-/react-native-branch-2.0.0-beta.3.tgz#2167af86bbc9f964bd45bd5f37684e5b54965e32"

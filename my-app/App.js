@@ -1,101 +1,154 @@
 import React, { Component } from 'react';
 import {
-  AppRegistry,
-  Button,
   Dimensions,
   PanResponder,
   SectionList,
   StatusBar,
   StyleSheet,
   Text,
-  TouchableOpacity,
+  TouchableWithoutFeedback,
   View
 } from 'react-native';
 
-const { width, height } = Dimensions.get('window');
-const statBarHeight = 50;
-const registryElemWidth = 30;
-const registryElemHeight = (height - statBarHeight) / 30;
+const { height, width } = Dimensions.get('window');
 
-const getSection = ({moveX, moveY, dx, dy}, counter) => {
-  if (moveX > registryElemWidth) return -1;
-  else return getSectionHelper(moveX, moveY, counter);
+const letters = [
+  'A',
+  'B',
+  'C',
+  'D',
+  'E',
+  'F',
+  'G',
+  'H',
+  'I',
+  'J',
+  'K',
+  'L',
+  'M',
+  'N',
+  'O',
+  'P',
+  'Q',
+  'R',
+  'S',
+  'T',
+  'U',
+  'V',
+  'W',
+  'X',
+  'Y',
+  'Z'
+];
+const sections = letters.map((title) => {
+  const data = new Array(26).fill('item');
+
+  return {
+    title,
+    data
+  };
+});
+
+const statBarHeight = 0; // TODO: dynamcially from app
+const registryElemWidth = 20;
+const registryElemHeight = (height - statBarHeight) / 29;
+
+/**
+ * ...
+ *
+ * @param {*} param0
+ * @param {number} counter
+ * @return {boolean|number} ...
+ */
+const getSectionIndex = ({ moveX, moveY, dx, dy }, counter = 0, sectionLength) => {
+  if (moveX < width - registryElemWidth) return false;
+
+  return getSectionIndexHelper(moveX, moveY, counter, sectionLength);
 };
 
-const getSectionHelper = (moveX, moveY, counter) => {
-  if (
-    moveY > statBarHeight + counter * registryElemHeight &&
-    moveY <= statBarHeight + (counter + 1) * registryElemHeight
-  ) {
+/**
+ * ...0-29 because of alphabet a-z + ä,ö,ü
+ *
+ * @param {number} moveX the latest screen x coordinate of the recently-moved touch
+ * @param {number} moveY the latest screen y coordinate of the recently-moved touch
+ * @param {number} counter current section index
+ * @return {number} a number from 0 to 29
+ */
+const getSectionIndexHelper = (moveX, moveY, counter, sectionLength) => {
+  if (counter > sectionLength) return false;
+
+  const elementY = statBarHeight + counter * registryElemHeight;
+  const nextElementY = statBarHeight + (counter + 1) * registryElemHeight;
+
+  if (moveY >= elementY && moveY < nextElementY) {
     return counter;
-  } else return getSectionHelper(moveX, moveY, counter+1);
-};
-
-
-export default class App extends Component {
-
-  componentWillMount() {
-    this._panResponder = PanResponder.create({
-      onMoveShouldSetPanResponder: (evt, gestureState) => !!getSection(gestureState,0),
-      onPanResponderMove: (evt, gestureState) => {
-        const section = getSection(gestureState,0);
-        if (section > 0 && section < this.sectionListRef.props.sections.length) {
-          this.scrollToSection(section);
-        }
-      },
-      onPanResponderTerminationRequest: (evt, gestureState) => true
-    });
   }
 
-  scrollToSection = (x) => {
+  return getSectionIndexHelper(moveX, moveY, counter + 1);
+};
+
+export default class App extends Component {
+  // https://facebook.github.io/react-native/docs/panresponder.html
+  _panResponder = PanResponder.create({
+    onMoveShouldSetPanResponder: (evt, gestureState) => {
+      const sectionIndex = getSectionIndex(gestureState);
+
+      return sectionIndex == 0 || !!sectionIndex;
+    },
+    onPanResponderMove: (evt, gestureState) => {
+      const sectionIndex = getSectionIndex(gestureState);
+
+      if (sectionIndex < this.sectionListRef.props.sections.length) {
+        this.scrollToSection(sectionIndex);
+      }
+    },
+    onPanResponderTerminationRequest: (evt, gestureState) => true
+  });
+
+  // _getItemLayout = (data, index) => ({
+  //   length: registryElemHeight,
+  //   offset: registryElemHeight * index,
+  //   index
+  // });
+
+  scrollToSection = (sectionIndex) => {
     this.sectionListRef.scrollToLocation({
-      sectionIndex: x,
+      animated: false,
       itemIndex: 0,
-      viewPosition: 0.5
+      sectionIndex,
+      viewOffset: +20,
+      viewPosition: 0
     });
   };
 
   render() {
     return (
-      <View style={styles.container} {...this._panResponder.panHandlers}>
+      <View style={styles.container}>
         <StatusBar hidden />
-        <View style={(styles.statBar, styles.skyblue)}>
-          <Text style={styles.statBar}>TEST</Text>
-        </View>
         <View style={styles.listContainer}>
-          <View style={{ flexDirection: 'column', flex: 1 }}>
-            <View style={[styles.regElem, styles.magenta]} />
-            <View style={[styles.regElem, styles.orange]} />
-            <View style={[styles.regElem, styles.blue]} />
-            <View style={[styles.regElem, styles.green]} />
-            <View style={[styles.regElem, styles.red]} />
-            <View style={[styles.regElem, styles.yellow]} />
-            <View style={[styles.regElem, styles.teal]} />
-            <View style={[styles.regElem, styles.purple]} />
-            <View style={[styles.regElem, styles.pink]} />
-            <View style={[styles.regElem, styles.plum]} />
-          </View>
-          <View style={{ flexDirection: 'row', flex: 1 }}>
-            <SectionList
-              ref={(ref) => (this.sectionListRef = ref)}
-              renderItem={({ item, index, section }) => <Text key={index}>{item}</Text>}
-              renderSectionHeader={({ section: { title } }) => (
-                <Text style={{ fontWeight: 'bold' }}>{title}</Text>
-              )}
-              sections={[
-                { title: 'A', data: ['item1', 'item2', 'item3', 'item4', 'item5', 'item6'] },
-                { title: 'B', data: ['item1', 'item2', 'item3', 'item4', 'item5', 'item6'] },
-                { title: 'C', data: ['item1', 'item2', 'item3', 'item4', 'item5', 'item6'] },
-                { title: 'D', data: ['item1', 'item2', 'item3', 'item4', 'item5', 'item6'] },
-                { title: 'E', data: ['item1', 'item2', 'item3', 'item4', 'item5', 'item6'] },
-                { title: 'F', data: ['item1', 'item2', 'item3', 'item4', 'item5', 'item6'] },
-                { title: 'G', data: ['item1', 'item2', 'item3', 'item4', 'item5', 'item6'] },
-                { title: 'H', data: ['item1', 'item2', 'item3', 'item4', 'item5', 'item6'] },
-                { title: 'I', data: ['item1', 'item2', 'item3', 'item4', 'item5', 'item6'] },
-                { title: 'J', data: ['item1', 'item2', 'item3', 'item4', 'item5', 'item6'] }
-              ]}
-              keyExtractor={(item, index) => item + index}
-            />
+          <SectionList
+            initialNumToRender={700}
+            ref={(ref) => (this.sectionListRef = ref)}
+            renderItem={({ item }) => <Text>{item}</Text>}
+            renderSectionHeader={({ section: { title } }) => (
+              <Text style={{ fontWeight: 'bold' }}>{title}</Text>
+            )}
+            sections={sections}
+            keyExtractor={(item, index) => item + index}
+            // getItemLayout={this._getItemLayout}
+          />
+          <View {...this._panResponder.panHandlers}>
+            {sections.map((section, index) => (
+              <TouchableWithoutFeedback
+                key={`${index}${section.title}`}
+                onPress={() => this.scrollToSection(index)}
+                style={{}}
+              >
+                <View style={[{ backgroundColor: '#f0f' }, styles.regElem]}>
+                  <Text>{section.title}</Text>
+                </View>
+              </TouchableWithoutFeedback>
+            ))}
           </View>
         </View>
       </View>
@@ -105,50 +158,15 @@ export default class App extends Component {
 
 const styles = StyleSheet.create({
   container: {
-    height: height,
-    backgroundColor: '#aff'
-  },
-  statBar: {
-    height: statBarHeight
+    height: height
   },
   regElem: {
-    width: registryElemWidth,
-    height: registryElemHeight
+    borderBottomColor: '#777',
+    borderBottomWidth: 1,
+    height: registryElemHeight,
+    width: registryElemWidth
   },
   listContainer: {
     flexDirection: 'row'
-  },
-  skyblue: {
-    backgroundColor: '#0dd'
-  },
-  magenta: {
-    backgroundColor: '#f0f'
-  },
-  orange: {
-    backgroundColor: '#f70'
-  },
-  blue: {
-    backgroundColor: '#00F'
-  },
-  green: {
-    backgroundColor: '#0f0'
-  },
-  red: {
-    backgroundColor: '#f00'
-  },
-  yellow: {
-    backgroundColor: '#ff0'
-  },
-  teal: {
-    backgroundColor: '#0af'
-  },
-  purple: {
-    backgroundColor: '#70f'
-  },
-  pink: {
-    backgroundColor: '#f07'
-  },
-  plum: {
-    backgroundColor: '#707'
   }
 });

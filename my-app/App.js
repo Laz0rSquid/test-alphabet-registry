@@ -2,13 +2,13 @@ import React, { Component } from 'react';
 import {
   Dimensions,
   PanResponder,
-  SectionList,
   StatusBar,
   StyleSheet,
   Text,
-  TouchableWithoutFeedback,
+  TouchableOpacity,
   View
 } from 'react-native';
+import { LargeList } from 'react-native-largelist';
 
 const { height, width } = Dimensions.get('window');
 
@@ -38,10 +38,13 @@ const letters = [
   'W',
   'X',
   'Y',
-  'Z'
+  'Z',
+  'Ä',
+  'Ö',
+  'Ü'
 ];
 const sections = letters.map((title) => {
-  const data = new Array(26).fill('item');
+  const data = new Array(26).fill(`${title}-item`);
 
   return {
     title,
@@ -53,72 +56,80 @@ const statBarHeight = 0; // TODO: dynamcially from app
 const registryElemWidth = 20;
 const registryElemHeight = (height - statBarHeight) / 29;
 
-/**
- * ...
- *
- * @param {*} param0
- * @param {number} counter
- * @return {boolean|number} ...
- */
-const getSectionIndex = ({ moveX, moveY, dx, dy }, counter = 0, sectionLength) => {
-  if (moveX < width - registryElemWidth) return false;
+export default class App extends Component {
+  cellHeight = 148;
+  refreshing = false;
+  largeList;
+  listSections;
+  panResponder;
 
-  return getSectionIndexHelper(moveX, moveY, counter, sectionLength);
-};
+  constructor(props) {
+    super(props);
+    this.listSections = sections;
 
-/**
- * ...0-29 because of alphabet a-z + ä,ö,ü
- *
- * @param {number} moveX the latest screen x coordinate of the recently-moved touch
- * @param {number} moveY the latest screen y coordinate of the recently-moved touch
- * @param {number} counter current section index
- * @return {number} a number from 0 to 29
- */
-const getSectionIndexHelper = (moveX, moveY, counter, sectionLength) => {
-  if (counter > sectionLength) return false;
+    // https://facebook.github.io/react-native/docs/panresponder.html
+    this.panResponder = PanResponder.create({
+      onMoveShouldSetPanResponder: (evt, gestureState) => {
+        const sectionIndex = this._getSectionIndex(gestureState);
 
-  const elementY = statBarHeight + counter * registryElemHeight;
-  const nextElementY = statBarHeight + (counter + 1) * registryElemHeight;
+        return sectionIndex == 0 || !!sectionIndex;
+      },
+      onPanResponderMove: (evt, gestureState) => {
+        const sectionIndex = this._getSectionIndex(gestureState);
 
-  if (moveY >= elementY && moveY < nextElementY) {
-    return counter;
+        if (sectionIndex < this.listSections.length) {
+          this._scrollToSection(sectionIndex);
+        }
+      },
+      onPanResponderTerminationRequest: (evt, gestureState) => true
+    });
   }
 
-  return getSectionIndexHelper(moveX, moveY, counter + 1);
-};
+  _renderItem(section, row) {
+    const item = sections[section].data[row];
+    return (
+      <View style={{ flex: 1, backgroundColor: 'white' }}>
+        <Text>{item}</Text>
+      </View>
+    );
+  }
 
-export default class App extends Component {
-  // https://facebook.github.io/react-native/docs/panresponder.html
-  _panResponder = PanResponder.create({
-    onMoveShouldSetPanResponder: (evt, gestureState) => {
-      const sectionIndex = getSectionIndex(gestureState);
+  /**
+   * ...0-29 because of alphabet a-z (26) + ä,ö,ü (3)
+   *
+   * @param {number} moveX the latest screen x coordinate of the recently-moved touch
+   * @param {number} moveY the latest screen y coordinate of the recently-moved touch
+   * @param {number} counter current section index
+   * @return {number} a number from 0 to 29
+   */
+  _getSectionIndexHelper = (moveX, moveY, counter, sectionLength) => {
+    if (counter > sectionLength) return false;
 
-      return sectionIndex == 0 || !!sectionIndex;
-    },
-    onPanResponderMove: (evt, gestureState) => {
-      const sectionIndex = getSectionIndex(gestureState);
+    const elementY = statBarHeight + counter * registryElemHeight;
+    const nextElementY = statBarHeight + (counter + 1) * registryElemHeight;
 
-      if (sectionIndex < this.sectionListRef.props.sections.length) {
-        this.scrollToSection(sectionIndex);
-      }
-    },
-    onPanResponderTerminationRequest: (evt, gestureState) => true
-  });
+    if (moveY >= elementY && moveY < nextElementY) {
+      return counter;
+    }
 
-  // _getItemLayout = (data, index) => ({
-  //   length: registryElemHeight,
-  //   offset: registryElemHeight * index,
-  //   index
-  // });
+    return this._getSectionIndexHelper(moveX, moveY, counter + 1);
+  };
 
-  scrollToSection = (sectionIndex) => {
-    this.sectionListRef.scrollToLocation({
-      animated: false,
-      itemIndex: 0,
-      sectionIndex,
-      viewOffset: +20,
-      viewPosition: 0
-    });
+  /**
+   * ...
+   *
+   * @param {*} params
+   * @param {number} counter
+   * @return {boolean|number} ...
+   */
+  _getSectionIndex = ({ moveX, moveY, dx, dy }, counter = 0, sectionLength) => {
+    if (moveX < width - registryElemWidth) return false;
+
+    return this._getSectionIndexHelper(moveX, moveY, counter, sectionLength);
+  };
+
+  _scrollToSection = (sectionIndex) => {
+    this.largeList.scrollToIndexPath({ section: sectionIndex, row: 0 }, false);
   };
 
   render() {
@@ -126,28 +137,33 @@ export default class App extends Component {
       <View style={styles.container}>
         <StatusBar hidden />
         <View style={styles.listContainer}>
-          <SectionList
-            initialNumToRender={700}
-            ref={(ref) => (this.sectionListRef = ref)}
-            renderItem={({ item }) => <Text>{item}</Text>}
-            renderSectionHeader={({ section: { title } }) => (
-              <Text style={{ fontWeight: 'bold' }}>{title}</Text>
+          <LargeList
+            style={{ backgroundColor: '#fff', flex: 1, height: height }}
+            ref={(ref) => (this.largeList = ref)}
+            numberOfRowsInSection={(section) => this.listSections[section].data.length}
+            numberOfSections={() => this.listSections.length}
+            heightForCell={(section, row) => (row % 2 ? this.cellHeight : this.cellHeight * 1.5)}
+            renderCell={this._renderItem}
+            renderSection={(section) => (
+              <View style={{ backgroundColor: '#666' }}>
+                <Text style={{ fontWeight: 'bold' }}>{this.listSections[section].title}</Text>
+              </View>
             )}
-            sections={sections}
-            keyExtractor={(item, index) => item + index}
-            // getItemLayout={this._getItemLayout}
+            heightForSection={(section) => 20}
+            renderItemSeparator={() => (
+              <View style={{ backgroundColor: '#EEE', height: 1, marginLeft: 16 }} />
+            )}
           />
-          <View {...this._panResponder.panHandlers}>
-            {sections.map((section, index) => (
-              <TouchableWithoutFeedback
+          <View {...this.panResponder.panHandlers}>
+            {this.listSections.map((section, index) => (
+              <TouchableOpacity
                 key={`${index}${section.title}`}
-                onPress={() => this.scrollToSection(index)}
-                style={{}}
+                onPress={() => this._scrollToSection(index)}
               >
-                <View style={[{ backgroundColor: '#f0f' }, styles.regElem]}>
+                <View style={[{ backgroundColor: '#fff' }, styles.regElem]}>
                   <Text>{section.title}</Text>
                 </View>
-              </TouchableWithoutFeedback>
+              </TouchableOpacity>
             ))}
           </View>
         </View>
@@ -158,11 +174,10 @@ export default class App extends Component {
 
 const styles = StyleSheet.create({
   container: {
-    height: height
+    flex: 1
   },
   regElem: {
-    borderBottomColor: '#777',
-    borderBottomWidth: 1,
+    alignItems: 'center',
     height: registryElemHeight,
     width: registryElemWidth
   },

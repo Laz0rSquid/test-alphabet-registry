@@ -43,8 +43,24 @@ const letters = [
   'Ö',
   'Ü'
 ];
+
+const getRandomInt = (max) => {
+  return Math.floor(Math.random() * Math.floor(max));
+};
+
+const contents = [
+  'In magna et qui officia elit et est irure consequat commodo nulla. Consequat commodo nulla.',
+  'Voluptate nisi mollit in nulla adipisicing ea laboris.',
+  'Pariatur deserunt fugiat est ullamco amet voluptate tempor cillum. Eu adipisicing nostrud aliquip est laboris velit esse.',
+  'Proident ut ipsum velit ipsum ipsum elit aliqua cillum veniam id mollit.\nCommodo eiusmod eiusmod reprehenderit magna eiusmod deserunt.\nAnim amet fugiat ut voluptate tempor.'
+];
+
 const sections = letters.map((title) => {
-  const data = new Array(26).fill(`${title}-item`);
+  let data = new Array(26).fill(`${title}-item\n\n${contents[getRandomInt(4)]}`);
+
+  if (title === 'E') {
+    data = [];
+  }
 
   return {
     title,
@@ -57,7 +73,6 @@ const registryElemWidth = 20;
 const registryElemHeight = (height - statBarHeight) / 29;
 
 export default class App extends Component {
-  cellHeight = 148;
   refreshing = false;
   largeList;
   listSections;
@@ -66,6 +81,10 @@ export default class App extends Component {
   constructor(props) {
     super(props);
     this.listSections = sections;
+
+    this.state = {
+      currentLetter: ''
+    };
 
     // https://facebook.github.io/react-native/docs/panresponder.html
     this.panResponder = PanResponder.create({
@@ -77,13 +96,39 @@ export default class App extends Component {
       onPanResponderMove: (evt, gestureState) => {
         const sectionIndex = this._getSectionIndex(gestureState);
 
-        if (sectionIndex < this.listSections.length) {
-          this._scrollToSection(sectionIndex);
+        if (
+          sectionIndex !== false &&
+          sectionIndex >= 0 &&
+          sectionIndex < this.listSections.length
+        ) {
+          if (this.listSections[sectionIndex] && this.listSections[sectionIndex].data.length) {
+            this.setState({ currentLetter: this.listSections[sectionIndex].title });
+            this._scrollToSection(sectionIndex);
+          }
         }
       },
-      onPanResponderTerminationRequest: (evt, gestureState) => true
+      onPanResponderTerminationRequest: (evt, gestureState) => true,
+      onPanResponderRelease: (evt, gestureState) => {
+        this.setState({ currentLetter: '' });
+      },
+      onPanResponderTerminate: (evt, gestureState) => {
+        this.setState({ currentLetter: '' });
+      }
     });
   }
+
+  _cellHeight = (section, row) => {
+    const item = sections[section].data[row];
+
+    if (item.length < 50) {
+      return 50;
+    } else if (item.length < 100) {
+      return 80;
+    } else if (item.length < 160) {
+      return 120;
+    }
+    return item.length - 20;
+  };
 
   _renderItem(section, row) {
     const item = sections[section].data[row];
@@ -140,16 +185,25 @@ export default class App extends Component {
           <LargeList
             style={{ backgroundColor: '#fff', flex: 1, height: height }}
             ref={(ref) => (this.largeList = ref)}
-            numberOfRowsInSection={(section) => this.listSections[section].data.length}
+            numberOfRowsInSection={(sextionIndex) => this.listSections[sextionIndex].data.length}
             numberOfSections={() => this.listSections.length}
-            heightForCell={(section, row) => (row % 2 ? this.cellHeight : this.cellHeight * 1.5)}
+            numberOfSectionPoolSize={29}
+            heightForCell={(sectionIndex, rowIndex) => this._cellHeight(sectionIndex, rowIndex)}
             renderCell={this._renderItem}
-            renderSection={(section) => (
-              <View style={{ backgroundColor: '#666' }}>
-                <Text style={{ fontWeight: 'bold' }}>{this.listSections[section].title}</Text>
-              </View>
-            )}
-            heightForSection={(section) => 20}
+            renderSection={(sectionIndex) => {
+              if (this.listSections[sectionIndex] && this.listSections[sectionIndex].data.length) {
+                return (
+                  <View style={{ backgroundColor: '#666' }}>
+                    <Text style={{ fontWeight: 'bold' }}>
+                      {this.listSections[sectionIndex].title}
+                    </Text>
+                  </View>
+                );
+              }
+            }}
+            heightForSection={(section) =>
+              this.listSections[section] && this.listSections[section].data.length ? 20 : 0
+            }
             renderItemSeparator={() => (
               <View style={{ backgroundColor: '#EEE', height: 1, marginLeft: 16 }} />
             )}
@@ -158,15 +212,34 @@ export default class App extends Component {
             {this.listSections.map((section, index) => (
               <TouchableOpacity
                 key={`${index}${section.title}`}
+                onPressIn={() => {
+                  if (this.listSections[index] && this.listSections[index].data.length) {
+                    this.setState({ currentLetter: this.listSections[index].title });
+                  }
+                }}
+                onPressOut={() => this.setState({ currentLetter: '' })}
                 onPress={() => this._scrollToSection(index)}
               >
-                <View style={[{ backgroundColor: '#fff' }, styles.regElem]}>
-                  <Text>{section.title}</Text>
+                <View style={styles.regElem}>
+                  <Text
+                    style={
+                      !this.listSections[index] || !this.listSections[index].data.length
+                        ? styles.regElemInactive
+                        : null
+                    }
+                  >
+                    {section.title}
+                  </Text>
                 </View>
               </TouchableOpacity>
             ))}
           </View>
         </View>
+        {this.state.currentLetter.length && (
+          <View style={styles.currentLetter}>
+            <Text>{this.state.currentLetter}</Text>
+          </View>
+        )}
       </View>
     );
   }
@@ -174,14 +247,31 @@ export default class App extends Component {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center'
   },
   regElem: {
     alignItems: 'center',
+    backgroundColor: '#fff',
     height: registryElemHeight,
     width: registryElemWidth
   },
+  regElemInactive: {
+    color: '#999'
+  },
   listContainer: {
     flexDirection: 'row'
+  },
+  currentLetter: {
+    position: 'absolute',
+    height: 40,
+    width: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'white',
+    borderColor: 'black',
+    borderWidth: 2,
+    borderRadius: 5
   }
 });

@@ -185,7 +185,7 @@ export default class App extends Component {
           <LargeList
             style={{ backgroundColor: '#fff', flex: 1, height: height }}
             ref={(ref) => (this.largeList = ref)}
-            numberOfRowsInSection={(sextionIndex) => this.listSections[sextionIndex].data.length}
+            numberOfRowsInSection={(sectionIndex) => this.listSections[sectionIndex].data.length}
             numberOfSections={() => this.listSections.length}
             numberOfSectionPoolSize={29}
             heightForCell={(sectionIndex, rowIndex) => this._cellHeight(sectionIndex, rowIndex)}
